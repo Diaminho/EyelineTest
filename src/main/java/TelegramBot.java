@@ -1,10 +1,8 @@
-import org.telegram.telegrambots.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
+import org.telegram.telegrambots.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
-import org.telegram.telegrambots.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -99,10 +97,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         if(update.hasMessage()) {
             Message message=update.getMessage();
             String textMessage=message.getText();
+            //SendPhoto sendPhoto=new SendPhoto();
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(update.getMessage().getChatId());
-            sendMessage.enableMarkdown(true);
             sendMessage.setText("0");
+            sendMessage.disableWebPagePreview();
+            sendMessage.setParseMode("HTML");
             setButtons(sendMessage);
 
             if (textMessage.compareTo("Сначала")==0){
@@ -114,6 +114,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             try {
                 execute(sendMessage);
+                //sendPhoto(sendPhoto);
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
@@ -122,7 +123,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             update.getCallbackQuery();
         }
     }
-
 
 
     /**
