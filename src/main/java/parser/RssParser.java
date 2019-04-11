@@ -1,36 +1,40 @@
 package parser;
 
-import com.sun.syndication.feed.rss.Enclosure;
-import com.sun.syndication.feed.rss.Image;
 import com.sun.syndication.feed.synd.SyndEnclosureImpl;
 import com.sun.syndication.feed.synd.SyndEntryImpl;
 import com.sun.syndication.feed.synd.SyndFeed;
 import com.sun.syndication.io.FeedException;
 import com.sun.syndication.io.SyndFeedInput;
 import com.sun.syndication.io.XmlReader;
+import org.jsoup.Jsoup;
+import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import static j2html.TagCreator.*;
 
 /**
  * Класс, который парсит RSS из URL источника
  */
 public class RssParser {
-    /**
-     * номер текущей новости
-     */
+    //номер текущей новости
     private int countRss;
-    /**
-     * список всех доступных новостей
-     */
+    //список всех доступных новостей
     private List<SyndEntryImpl> entryList;
+    //заголовок первого поста из списка
+    private String firstTitle;
+    //фотография текущего поста
+    private String currentPhoto;
+
+    public String getFirstTitle() {
+        return firstTitle;
+    }
+
+    public void setFirstTitle() {
+        firstTitle=entryList.get(0).getTitle();
+    }
 
     public int getCountRss() {
         return countRss;
@@ -40,12 +44,20 @@ public class RssParser {
         this.countRss = countRss;
     }
 
+    public String getCurrentPhoto() {
+        return currentPhoto;
+    }
+
+    public void setCurrentPhoto(String currentPhoto) {
+        this.currentPhoto = currentPhoto;
+    }
+
     /**
      * Метод парсит RSS из URL
      * @param url
      * @return Возвращает заголовок новости и ссылку на нее (пока что)
      */
-    public String ReadRss(String url){
+    public String readRss(String url){
         URL feedSource = null;
         try {
             feedSource = new URL(url);
@@ -61,36 +73,65 @@ public class RssParser {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println(feed);
         entryList=new ArrayList<>(feed.getEntries());
-        SyndEnclosureImpl enclosure=((SyndEnclosureImpl)entryList.get(countRss).getEnclosures().get(0));
-        if(enclosure.getType().compareTo("image/jpeg")==0){
-            //Image image=new Image(enclosure.getUrl());
+        return readRss();
+    }
+
+    /**
+     * Метод читает пост из списка доступных постов и преобразует его в строку
+     * @return
+     */
+    public String readRss(){
+        List enclosureList=entryList.get(countRss).getEnclosures();
+        SyndEnclosureImpl enclosure=null;
+        if (enclosureList.size()!=0) {
+            enclosure =(SyndEnclosureImpl) enclosureList.get(0);
         }
 
+        String imgUrl=null;
+        if(enclosure!=null && enclosure.getType().compareTo("image/jpeg")==0){
+            imgUrl=enclosure.getUrl();
+        }
 
         SyndEntryImpl entry=entryList.get(countRss);
 
-        Map<String, String> newsInfo=new HashMap<String, String>();
-        newsInfo.put("Link", entry.getLink());
-        newsInfo.put("Title",entry.getTitle());
-        newsInfo.put("Image", enclosure.getUrl());
-        newsInfo.put("Body", entry.getDescription().getValue());
-        if (countRss!=entryList.size()) {
+        if (countRss<entryList.size()) {
             countRss++;
         }
 
-        return createHTML(newsInfo);
+        String content=Jsoup.parse(entry.getDescription().getValue()).text();
+        content= (content.length()>500)? content.substring(0,500): content;
+
+        String title=entry.getTitle();
+        imgUrl= (imgUrl==null) ? getImgUrl(entry.getDescription().getValue()): imgUrl;
+        String link=entry.getLink();
+
+        //строка для постов без изображений
+        String res="<b>"+title+"</b> \n"+content+"\n"+link;
+
+        if (imgUrl!=null){
+            currentPhoto=new String(imgUrl);
+            content= (content.length()>200) ? content.substring(0,200): content;
+            res=link+"\n"+title+"\n\n"+content;
+            res= (res.length()>200) ? res.substring(0,200) : res;
+        } else {
+            currentPhoto = "";
+        }
+        return res;
     }
 
-
-    private String createHTML(Map<String, String> newsInfo){
-        String s=b(newsInfo.get("Title")).render()+
-                i(newsInfo.get("Body")).render()+
-                a().withHref(newsInfo.get("Image")).withText("\n").render()+
-                a().withHref(newsInfo.get("Link")).withText(newsInfo.get("Link")).render();
-        System.out.println(s);
-        return s;
+    /**
+     * Функция получает URL первой картинки из HTML-строки
+     * @param content
+     * @return Возвращает ссылку на изображение или null
+     */
+    private String getImgUrl(String content) {
+        Elements imgs = Jsoup.parse(content).getElementsByTag("img");
+        if (imgs.size()>0){
+            return imgs.get(0).absUrl("src");
+        }
+        else {
+            return null;
+        }
     }
-
 }
