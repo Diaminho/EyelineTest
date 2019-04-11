@@ -1,5 +1,6 @@
 package bot;
 
+import org.apache.log4j.Logger;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
@@ -19,8 +20,8 @@ import java.util.List;
  * Класс, реализующий бота для получения постов из RSS источников в телеграм
  */
 public class TelegramBot extends TelegramLongPollingBot {
-    private static final String botToken="TOKEN";
-    private static final String botUserName="BOTNAME";
+    private static final String botToken="888333065:AAGaAeJc5v9VgETNAGW1ZFf7ALjjQLRzCIo";
+    private static final String botUserName="EyeLineTestBot";
     RssParser rssParser;
     private ReplyKeyboardMarkup replyKeyboardMarkup;
     LocalDateTime time;
@@ -34,7 +35,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         rssParser.readRss(url);
         rssParser.setFirstTitle();
         time=LocalDateTime.now();
-
     }
 
     /**
@@ -169,6 +169,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 message.setPhoto(photo);
                 message.setCaption(sendMessage.getText().substring(0,200));
                 message.setChatId(sendMessage.getChatId());
+                message.setReplyMarkup(replyKeyboardMarkup);
                 execute(message);
             }
 
