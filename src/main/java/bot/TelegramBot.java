@@ -140,7 +140,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         System.out.println("Next");
         String oldFirstPost=rssParser.getFirstTitle();
         //проверка, прошло ли 10 минут
-        if (LocalDateTime.now().isAfter(time.plusSeconds(10))) {
+        if (LocalDateTime.now().isAfter(time.plusMinutes(10))) {
             rssParser.readRss(url);
             rssParser.setFirstTitle();
             //ставим текущее время в качестве времени последнего обновления
